@@ -1,13 +1,17 @@
 package com.scltools.auth;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.PersistenceConstructor;
+import org.springframework.data.relational.core.mapping.Table;
 
 @Getter
 @Setter
 @ToString
+@Table(value = "users")
 public class User
 {
     @Id
@@ -26,6 +30,7 @@ public class User
         return new User(null, firstName, lastName, email, password);
     }
 
+    @PersistenceConstructor
     private User(Long id, String firstName, String lastName, String email, String password)
     {
         this.id = id;
