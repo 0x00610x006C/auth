@@ -1,5 +1,6 @@
 package com.scltools.auth.service;
 
+import com.scltools.auth.AuthController;
 import com.scltools.auth.data.User;
 import com.scltools.auth.data.UserRepository;
 import org.springframework.http.HttpStatus;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class AuthService
@@ -30,5 +32,18 @@ public class AuthService
         }
 
         return userRepository.save(User.of(firstName, lastName, email, passwordEncoder.encode(password)));
+    }
+
+    public User login(String email, String password)
+    {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid credentials"));
+
+        if (!passwordEncoder.matches(password, user.getPassword()))
+        {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid credentials");
+        }
+
+        return user;
     }
 }
