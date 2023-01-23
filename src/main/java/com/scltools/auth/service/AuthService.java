@@ -1,15 +1,14 @@
 package com.scltools.auth.service;
 
-import com.scltools.auth.AuthController;
 import com.scltools.auth.data.User;
 import com.scltools.auth.data.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Objects;
-import java.util.Optional;
 
 @Service
 public class AuthService
@@ -18,10 +17,21 @@ public class AuthService
 
     private final PasswordEncoder passwordEncoder;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder)
+    private final String accessSecret;
+
+    private final String refreshSecret;
+
+    public AuthService(UserRepository userRepository,
+                       PasswordEncoder passwordEncoder,
+                       @Value("${application.security.access-token-secret}")
+                       String accessSecret,
+                       @Value("${application.security.refresh-token-secret}")
+                       String refreshSecret)
     {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.accessSecret = accessSecret;
+        this.refreshSecret = refreshSecret;
     }
 
     public User register(String firstName, String lastName, String email, String password, String passwordConfirm)
@@ -34,7 +44,7 @@ public class AuthService
         return userRepository.save(User.of(firstName, lastName, email, passwordEncoder.encode(password)));
     }
 
-    public User login(String email, String password)
+    public Login login(String email, String password)
     {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid credentials"));
@@ -44,6 +54,6 @@ public class AuthService
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid credentials");
         }
 
-        return user;
+        return Login.of(user.getId(), accessSecret, refreshSecret);
     }
 }

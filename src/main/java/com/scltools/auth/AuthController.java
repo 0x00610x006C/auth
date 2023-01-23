@@ -3,8 +3,13 @@ package com.scltools.auth;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.scltools.auth.data.User;
 import com.scltools.auth.service.AuthService;
+import com.scltools.auth.service.Login;
+import com.scltools.auth.service.Token;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping(value = "/api")
@@ -63,20 +68,22 @@ public class AuthController
     ) {}
 
     record LoginResponse(
-            Long id,
-            @JsonProperty("first_name")
-            String firstName,
-            @JsonProperty("last_name")
-            String lastName,
-            String email
+            String token
     ) {}
 
     @PostMapping(value = "/login")
-    public LoginResponse login(@RequestBody LoginRequest loginRequest)
+    public LoginResponse login(@RequestBody LoginRequest loginRequest, HttpServletResponse response)
     {
-        User user = authService.login(loginRequest.email(), loginRequest.password());
+        Login login = authService.login(loginRequest.email(), loginRequest.password());
 
-        return new LoginResponse(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail());
+        Cookie cookie = new Cookie("refresh_token", login.getRefreshToken().getToken());
+        cookie.setMaxAge(3600);
+        cookie.setHttpOnly(true);
+        cookie.setPath("/api");
+
+        response.addCookie(cookie);
+
+        return new LoginResponse(login.getAccessToken().getToken());
     }
 
 }
