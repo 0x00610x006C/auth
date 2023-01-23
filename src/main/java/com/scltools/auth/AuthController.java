@@ -1,7 +1,8 @@
 package com.scltools.auth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.experimental.Accessors;
+import com.scltools.auth.data.User;
+import com.scltools.auth.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -9,12 +10,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(value = "/api")
 public class AuthController
 {
-    @Autowired
-    private final UserRepository userRepository;
+    private final AuthService authService;
 
-    public AuthController(UserRepository userRepository)
+    public AuthController(AuthService authService)
     {
-        this.userRepository = userRepository;
+        this.authService = authService;
     }
 
     @GetMapping(value = "/hello")
@@ -46,11 +46,12 @@ public class AuthController
     @PostMapping(value = "/register")
     public RegisterResponse register(@RequestBody RegisterRequest registerRequest)
     {
-        User user = User.of(
+        User user = authService.register(
                 registerRequest.firstName(),
                 registerRequest.lastName(),
                 registerRequest.email(),
-                registerRequest.password()
+                registerRequest.password(),
+                registerRequest.passwordConfirm()
         );
 
         return new RegisterResponse(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail());
