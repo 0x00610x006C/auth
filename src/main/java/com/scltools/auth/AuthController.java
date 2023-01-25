@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 @RestController
@@ -86,4 +87,43 @@ public class AuthController
         return new LoginResponse(login.getAccessToken().getToken());
     }
 
+
+    record UserResponse(
+            Long id,
+            @JsonProperty("first_name")
+            String firstName,
+            @JsonProperty("last_name")
+            String lastName,
+            String email
+    ) {}
+
+    @GetMapping(value = "/user")
+    public UserResponse user(HttpServletRequest request)
+    {
+        User user = (User) request.getAttribute("user");
+
+        return new UserResponse(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail());
+    }
+
+    record RefreshResponse(String token){}
+
+    @PostMapping(value = "/refresh")
+    public RefreshResponse refresh(@CookieValue("refresh_token") String refreshToken)
+    {
+        return new RefreshResponse(authService.refreshAccess(refreshToken).getAccessToken().getToken());
+    }
+
+    record LogoutResponse(String message){}
+
+    @PostMapping(value = "/logout")
+    public LogoutResponse logout(HttpServletResponse response)
+    {
+        Cookie cookie = new Cookie("refresh_token", null);
+        cookie.setMaxAge(0);
+        cookie.setHttpOnly(true);
+
+        response.addCookie(cookie);
+
+        return new LogoutResponse("success");
+    }
 }

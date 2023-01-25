@@ -56,4 +56,17 @@ public class AuthService
 
         return Login.of(user.getId(), accessSecret, refreshSecret);
     }
+
+    public User getUserFromToken(String token)
+    {
+        return userRepository.findById(Token.from(token, accessSecret))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "user not found"));
+    }
+
+    public Login refreshAccess(String refreshToken)
+    {
+        Long userId = Token.from(refreshToken, refreshSecret);
+
+        return Login.of(userId, accessSecret, Token.of(refreshToken));
+    }
 }
